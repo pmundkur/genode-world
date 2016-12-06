@@ -5,3 +5,7 @@ DOWNLOADS  := ocaml.archive
 URL(ocaml) := http://caml.inria.fr/pub/distrib/ocaml-4.03/ocaml-$(VERSION).tar.gz
 SHA(ocaml) := 28773fd89507dbc400a366b886425436569e70d8
 DIR(ocaml) := src/noux-pkg/ocaml
+
+PATCHES    := $(foreach P,$(shell cat $(REP_DIR)/src/app/noux-pkg/ocaml/patches/series),\
+                src/app/noux-pkg/ocaml/patches/$P)
+PATCH_OPT := -p1 -d src/noux-pkg/ocaml

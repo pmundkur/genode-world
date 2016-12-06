@@ -1,0 +1,221 @@
+diff --git a/configure b/configure
+index 0bb2d35..11fe2a5 100755
+--- a/configure
++++ b/configure
+@@ -15,9 +15,6 @@
+ #*                                                                        *
+ #**************************************************************************
+ 
+-ocamlversion=`head -1 VERSION`
+-echo "Configuring OCaml version $ocamlversion"
+-
+ configure_options="$*"
+ prefix=/usr/local
+ bindir=''
+@@ -27,10 +24,10 @@ mandir=''
+ manext=1
+ host_type=unknown
+ target_type=""
+-ccoption=''
++ccoption="${CC} ${CPPFLAGS} ${CFLAGS}"
+ asoption=''
+ asppoption=''
+-cclibs=''
++cclibs="${LIBS}"
+ curseslibs=''
+ mathlib='-lm'
+ dllib=''
+@@ -55,6 +52,9 @@ with_cfi=true
+ flambda=false
+ max_testsuite_dir_retries=0
+ 
++# Genode calls us out-of-tree, but passes us the srcdir location as an argument.
++srcdir=""
++
+ # Try to turn internationalization off, can cause config.guess to malfunction!
+ unset LANG
+ unset LC_ALL LC_CTYPE LC_COLLATE LC_MESSAGES LC_MONETARY LC_NUMERIC LC_TIME
+@@ -98,6 +98,8 @@ while : ; do
+     "") break;;
+     -prefix|--prefix)
+         prefix=$2; shift;;
++    -srcdir|--srcdir)
++	srcdir=$2; shift;;
+     -bindir|--bindir)
+         bindir=$2; shift;;
+     -target-bindir|--target-bindir)
+@@ -167,6 +169,8 @@ while : ; do
+         native_compiler=false;;
+     -flambda)
+         flambda=true;;
++    -build|--build)
++	shift;;
+     *) if echo "$1" | grep -q -e '^--\?[a-zA-Z0-9-]\+='; then
+          err "configure expects arguments of the form '-prefix /foo/bar'," \
+              "not '-prefix=/foo/bar' (note the '=')."
+@@ -202,6 +206,14 @@ case "$mandir" in
+    *) err 'The -mandir directory must be absolute or relative to $(PREFIX).';;
+ esac
+ 
++# Change to srcdir if specified.
++if test -n "$srcdir"; then
++  cd "$srcdir"
++fi
++
++ocamlversion=`head -1 VERSION`
++echo "Configuring OCaml version $ocamlversion"
++
+ # Generate the files
+ 
+ cd config/auto-aux
+@@ -433,6 +445,15 @@ case "$bytecc,$target" in
+     TOOLCHAIN="mingw"
+     SO="dll"
+     ;;
++  *,*-genode-*)
++    # This clause should be above x86_64-*-linux*, since that clause
++    # also matches x86_64-genode-linux.
++    # FIXME: use a better tuple?
++    #
++    TOOLPREF="genode-x86-"
++    # LDFLAGS contains libm, so we don't need "-lm".
++    mathlib=""
++    bytecclinkopts="${LDFLAGS}";;
+   *,x86_64-*-linux*)
+     # Tell gcc that we can use 32-bit code addresses for threaded code
+     # unless we are compiled for a shared library (-fPIC option)
+@@ -540,6 +561,10 @@ else
+                      echo "#define ARCH_SIXTYFOUR" >> m.h
+                      set 4 4 8 2 8
+                      arch64=true;;
++    x86_64-genode-*) inf "Wow! A 64 bit architecture!"
++                     echo "#define ARCH_SIXTYFOUR" >> m.h
++                     set 4 4 8 2 8
++                     arch64=true;;
+     *) err "Since datatype sizes cannot be guessed when cross-compiling,\n" \
+            "a hardcoded list is used but your architecture isn't known yet.\n" \
+            "You need to determine the sizes yourself.\n" \
+@@ -576,8 +601,8 @@ case $? in
+   2) err "This architecture seems to be neither big endian nor little" \
+          "endian.\n OCaml won't run on this architecture.";;
+   *) case $target in
+-       *-*-mingw*) inf "This is a little-endian architecture."
+-                   echo "#undef ARCH_BIG_ENDIAN" >> m.h;;
++       *-*-mingw*|x86*-genode-*) inf "This is a little-endian architecture."
++			       echo "#undef ARCH_BIG_ENDIAN" >> m.h;;
+        *) wrn "Something went wrong during endianness determination.\n" \
+               "You will have to figure out endianness yourself\n" \
+               "(option ARCH_BIG_ENDIAN in m.h).";;
+@@ -611,8 +636,8 @@ case "$target" in
+       1) inf "Doubles must be doubleword-aligned."
+          echo "#define ARCH_ALIGN_DOUBLE" >> m.h;;
+       *) case "$target" in
+-           *-*-mingw*) inf "Doubles can be word-aligned."
+-                       echo "#undef ARCH_ALIGN_DOUBLE" >> m.h;;
++           *-*-mingw*|x86_64-genode-*) inf "Doubles can be word-aligned."
++				       echo "#undef ARCH_ALIGN_DOUBLE" >> m.h;;
+            *) wrn "Something went wrong during alignment determination for" \
+                   "doubles.\n" \
+                   "We will assume alignment constraints over doubles.\n" \
+@@ -634,6 +659,9 @@ case "$target" in
+       echo "#define ARCH_ALIGN_INT64" >> m.h
+     fi;;
+   *-*-mingw*) true;; # Nothing is in config/m-nt.h so don't add anything.
++  x86_64-genode-*)
++    inf "64-bit integers can be word-aligned."
++    echo "#undef ARCH_ALIGN_INT64" >> m.h;;
+   *)
+     sh ./runtest int64align.c
+     case $? in
+@@ -670,6 +698,8 @@ if test $with_sharedlibs = "yes"; then
+       mksharedlib="$flexlink"
+       mkmaindll="$flexlink -maindll"
+       shared_libraries_supported=true;;
++    *-genode-*)
++      shared_libraries_supported=false;;
+     *-*-linux-gnu|*-*-linux|*-*-freebsd[3-9]*|*-*-freebsd[1-9][0-9]*\
+     |*-*-openbsd*|*-*-netbsd*|*-*-gnu*|*-*-haiku*)
+       sharedcccompopts="-fPIC"
+@@ -859,6 +889,7 @@ case "$target" in
+   x86_64-*-mingw*)              arch=amd64; system=mingw;;
+   aarch64-*-linux*)             arch=arm64; system=linux;;
+   x86_64-*-cygwin*)             arch=amd64; system=cygwin;;
++  x86_64-genode-linux)          arch=amd64; system=genode_linux;;
+ esac
+ 
+ # Some platforms exist both in 32-bit and 64-bit variants, not distinguished
+@@ -898,6 +929,7 @@ case "$arch,$nativecc,$system,$model" in
+   power,gcc*,elf,ppc)   partialld="ld -r -m elf32ppclinux";;
+   power,gcc*,elf,ppc64)   partialld="ld -r -m elf64ppc";;
+   power,gcc*,elf,ppc64le)   partialld="ld -r -m elf64lppc";;
++  *,*,genode_linux,*)   partialld="${LD} -r";;
+ esac
+ 
+ asppprofflags='-DPROFILING'
+@@ -935,6 +967,8 @@ case "$arch,$system" in
+   amd64,*|arm,*|arm64,*|i386,*|power,bsd*|sparc,*)
+                   as="${TOOLPREF}as"
+                   aspp="${TOOLPREF}gcc -c";;
++  *,genode_linux) as="${TOOLPREF}as"
++                  aspp="${TOOLPREF}gcc -c";;
+ esac
+ 
+ if test -n "$asoption"; then as="$asoption"; fi
+@@ -969,14 +1003,27 @@ if sh ./searchpath ${TOOLPREF}ranlib; then
+   inf "ranlib found"
+   echo "RANLIB=${TOOLPREF}ranlib" >> Makefile
+   echo "RANLIBCMD=${TOOLPREF}ranlib" >> Makefile
++  RANLIB="${TOOLPREF}ranlib"
+ else
+-  inf "ranlib not used"
+-  echo "RANLIB=${TOOLPREF}ar rs" >> Makefile
+-  echo "RANLIBCMD=" >> Makefile
++  case "$target" in
++    *-genode-*)
++      # Passed via environment
++      inf "ranlib is ${RANLIB}"
++      echo "RANLIB=${RANLIB}" >> Makefile
++      echo "RANLIBCMD=${RANLIB}" >> Makefile;;
++    *)
++      inf "ranlib not used"
++      RANLIB="${TOOLPREF}ar rs"
++      echo "RANLIB=${TOOLPREF}ar rs" >> Makefile
++      echo "RANLIBCMD=" >> Makefile;;
++  esac
+ fi
+ 
+-echo "ARCMD=${TOOLPREF}ar" >> Makefile
+-
++case "$target" in
++  *-genode-*) ARCMD=${AR};;
++  *)          ARCMD="${TOOLPREF}ar";;
++esac
++echo "ARCMD=${ARCMD}" >> Makefile
+ 
+ # Write the OS type (Unix or Cygwin)
+ 
+@@ -1757,7 +1804,7 @@ SYSLIB=-l\$(1)
+ #ml let syslib x = "-l"^x;;
+ 
+ ### How to build a static library
+-MKLIB=${TOOLPREF}ar rc \$(1) \$(2); ${TOOLPREF}ranlib \$(1)
++MKLIB=${ARCMD} rc \$(1) \$(2); ${TOOLPREF}ranlib \$(1)
+ #ml let mklib out files opts =      (* "" *)
+ #ml   Printf.sprintf "${TOOLPREF}ar rc %s %s %s; ${TOOLPREF}ranlib %s"
+ #ml                  out opts files out;;
+@@ -1771,6 +1818,7 @@ echo "NATIVECCPROFOPTS=$nativeccprofopts" >> Makefile
+ echo "NATIVECCLINKOPTS=$nativecclinkopts" >> Makefile
+ echo "NATIVECCRPATH=$nativeccrpath" >> Makefile
+ echo "NATIVECCLIBS=$cclibs $dllib" >> Makefile
++echo "LDFLAGS=${LDFLAGS}" >> Makefile
+ echo "ASM=$as" >> Makefile
+ echo "ASPP=$aspp" >> Makefile
+ echo "ASPPPROFFLAGS=$asppprofflags" >> Makefile
+@@ -1929,3 +1977,7 @@ if test ! -z "$MACOSX_DEPLOYMENT_TARGET"; then
+   wrn "The environment variable MACOSX_DEPLOYMENT_TARGET is set.\n" \
+       "This will probably prevent compiling the OCaml system."
+ fi
++
++# Set the srcdir to generate the top-level Genode Makefile, generated
++# from the template in the ports dir.
++sed -e "s~@SRCDIR@~$srcdir~g" ${REP_DIR}/src/${PRG_REL_DIR}/Makefile.in > ${BUILD_BASE_DIR}/${PRG_REL_DIR}/Makefile

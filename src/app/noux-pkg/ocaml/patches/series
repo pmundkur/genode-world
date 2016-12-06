@@ -1,0 +1,4 @@
+configure.patch
+byterun.Makefile.patch
+yacc.Makefile.patch
+tools.Makefile.shared.patch
