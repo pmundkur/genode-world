@@ -1,0 +1,17 @@
+This port compiles the ocaml byte-code compiler to work as a noux
+process on Genode.  It does not yet support the native-code compiler.
+
+Note that the port uses the cross-compilation support in the ocaml
+build, which requires the host to already have the exact same version
+of the compiler as the version in this port.
+
+A test run script that only does the build (but does not yet execute
+the built compiler on Genode) is provided. To use it to build:
+
+$ make run/ocaml_test
+
+(Sometimes if the build fails in the configure step, repeating the
+ command with VERBOSE= flags gets the build to go through.)
+
+$ make VERBOSE= run/ocaml_test
+
