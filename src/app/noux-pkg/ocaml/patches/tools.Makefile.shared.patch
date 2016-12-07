@@ -1,8 +1,8 @@
 diff --git a/tools/Makefile.shared b/tools/Makefile.shared
-index 1a24391..774ad2f 100644
+index 2803d78..13db2ff 100644
 --- a/tools/Makefile.shared
 +++ b/tools/Makefile.shared
-@@ -274,7 +274,7 @@ endif
+@@ -317,7 +317,7 @@ endif
  
  objinfo_helper$(EXE): objinfo_helper.c ../config/s.h
  	$(BYTECC) $(CCOUT)objinfo_helper$(EXE) $(BYTECCCOMPOPTS) \
