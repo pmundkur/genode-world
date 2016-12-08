@@ -1,5 +1,5 @@
 diff --git a/yacc/Makefile b/yacc/Makefile
-index 6c32474..323c263 100644
+index 6c32474..001b0cb 100644
 --- a/yacc/Makefile
 +++ b/yacc/Makefile
 @@ -27,7 +27,7 @@ OBJS= closure.$(O) error.$(O) lalr.$(O) lr0.$(O) main.$(O) \
@@ -7,7 +7,7 @@ index 6c32474..323c263 100644
  
  ocamlyacc$(EXE): $(OBJS)
 -	$(MKEXE) -o ocamlyacc$(EXE) $(OBJS) $(EXTRALIBS)
-+	$(MKEXE) -o ocamlyacc$(EXE) $(OBJS) $(EXTRALIBS) $(LDFLAGS)
++	$(MKEXE) -o ocamlyacc$(EXE) $(OBJS) $(EXTRALIBS) $(BYTECCLIBS) $(LDFLAGS)
  
  version.h : ../VERSION
  	echo "#define OCAML_VERSION \"`sed -e 1q ../VERSION`\"" >version.h

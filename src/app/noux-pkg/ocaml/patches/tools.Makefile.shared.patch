@@ -1,5 +1,5 @@
 diff --git a/tools/Makefile.shared b/tools/Makefile.shared
-index 2803d78..13db2ff 100644
+index 2803d78..66d1107 100644
 --- a/tools/Makefile.shared
 +++ b/tools/Makefile.shared
 @@ -317,7 +317,7 @@ endif
@@ -7,7 +7,7 @@ index 2803d78..13db2ff 100644
  objinfo_helper$(EXE): objinfo_helper.c ../config/s.h
  	$(BYTECC) $(CCOUT)objinfo_helper$(EXE) $(BYTECCCOMPOPTS) \
 -          $(DEF_SYMBOL_PREFIX) $(LIBBFD_INCLUDE) objinfo_helper.c $(LIBBFD_LINK)
-+          $(DEF_SYMBOL_PREFIX) $(LIBBFD_INCLUDE) objinfo_helper.c $(LIBBFD_LINK) $(LDFLAGS)
++          $(DEF_SYMBOL_PREFIX) $(LIBBFD_INCLUDE) objinfo_helper.c $(LIBBFD_LINK) $(BYTECCLIBS) $(LDFLAGS)
  
  OBJINFO=../compilerlibs/ocamlcommon.cma \
          ../compilerlibs/ocamlbytecomp.cma \
