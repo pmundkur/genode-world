@@ -2,7 +2,11 @@
 # Build
 #
 
-build { core init app/noux-pkg/ocaml }
+set build_components {
+	noux app/noux-pkg/ocaml
+}
+
+build $build_components
 
 create_boot_directory
 
@@ -31,4 +35,8 @@ install_config {
 # Build boot image
 #
 
-build_boot_image { core init ocaml }
+set boot_modules {
+	coreutils ocaml
+}
+
+build_boot_image { coreutils ocaml }

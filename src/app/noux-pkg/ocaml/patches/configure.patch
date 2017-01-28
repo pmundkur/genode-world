@@ -1,5 +1,6 @@
+7277086 Build patches for 4.04.0 on genode.
 diff --git a/configure b/configure
-index f43893a..c78844c 100755
+index f43893a..c5516c9 100755
 --- a/configure
 +++ b/configure
 @@ -15,9 +15,6 @@
@@ -203,15 +204,18 @@ index f43893a..c78844c 100755
  
  # Write the OS type (Unix or Cygwin)
  
-@@ -1921,7 +1969,7 @@ SYSLIB=-l\$(1)
+@@ -1921,9 +1969,9 @@ SYSLIB=-l\$(1)
  #ml let syslib x = "-l"^x;;
  
  ### How to build a static library
 -MKLIB=${TOOLPREF}ar rc \$(1) \$(2); ${TOOLPREF}ranlib \$(1)
-+MKLIB=${ARCMD} rc \$(1) \$(2); ${TOOLPREF}ranlib \$(1)
++MKLIB=${ARCMD} rc \$(1) \$(2); ${RANLIB} \$(1)
  #ml let mklib out files opts =      (* "" *)
- #ml   Printf.sprintf "${TOOLPREF}ar rc %s %s %s; ${TOOLPREF}ranlib %s"
+-#ml   Printf.sprintf "${TOOLPREF}ar rc %s %s %s; ${TOOLPREF}ranlib %s"
++#ml   Printf.sprintf "${ARCMD} rc %s %s %s; ${RANLIB} %s"
  #ml                  out opts files out;;
+ EOF
+ echo "ARCH=$arch" >> Makefile
 @@ -1935,6 +1983,7 @@ echo "NATIVECCPROFOPTS=$nativeccprofopts" >> Makefile
  echo "NATIVECCLINKOPTS=$nativecclinkopts" >> Makefile
  echo "NATIVECCRPATH=$nativeccrpath" >> Makefile
@@ -230,6 +234,6 @@ index f43893a..c78844c 100755
 +    # Set the srcdir to generate the top-level Genode Makefile, generated
 +    # from the template in the ports dir.
 +    sed -e "s~@SRCDIR@~$srcdir~g" \
-+        ${REP_DIR}/src/${PRG_REL_DIR}/Makefile.in \
-+        > ${BUILD_BASE_DIR}/${PRG_REL_DIR}/Makefile;;
++      ${REP_DIR}/src/${PRG_REL_DIR}/Makefile.in \
++      > ${BUILD_BASE_DIR}/${PRG_REL_DIR}/Makefile;;
 +esac
